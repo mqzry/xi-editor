@@ -16,6 +16,7 @@ use std::cmp::{min,max};
 use std::mem;
 
 use serde_json::value::Value;
+use unicode_width::UnicodeWidthStr;
 
 use xi_rope::rope::{Rope, LinesMetric, RopeInfo};
 use xi_rope::delta::{Delta, DeltaRegion};
@@ -498,12 +499,20 @@ impl View {
     // Of course, all these are identical for ASCII. For now we use UTF-8 code units
     // for simplicity.
 
+    // Problems:
+    // - offset might be a codepoint boundary otherwise we give unicode-width nonsense
+    // Solves:
+    // - 
     pub fn offset_to_line_col(&self, text: &Rope, offset: usize) -> (usize, usize) {
         let line = self.line_of_offset(text, offset);
-        (line, offset - self.offset_of_line(text, line))
+        let offset_of_line = self.offset_of_line(text, line);
+        let text_before_offset = text.slice_to_string(offset_of_line, offset);
+        let col = text_before_offset[..].width();
+        (line, col)
     }
 
     pub fn line_col_to_offset(&self, text: &Rope, line: usize, col: usize) -> usize {
+                
         let mut offset = self.offset_of_line(text, line).saturating_add(col);
         if offset >= text.len() {
             offset = text.len();

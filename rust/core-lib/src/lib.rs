@@ -15,6 +15,7 @@
 //! The main library for xi-core.
 
 extern crate serde;
+extern crate unicode_width;
 #[macro_use]
 extern crate serde_json;
 #[macro_use]
