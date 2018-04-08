@@ -512,8 +512,10 @@ impl View {
     }
 
     pub fn line_col_to_offset(&self, text: &Rope, line: usize, col: usize) -> usize {
-                
-        let mut offset = self.offset_of_line(text, line).saturating_add(col);
+
+        let offset_of_line = self.offset_of_line(text, line);
+        let offset_in_line = self.offset_in_line(text, line, col);
+        let offset = offset_of_line + offset_in_line;
         if offset >= text.len() {
             offset = text.len();
             if self.line_of_offset(text, offset) <= line {
@@ -548,6 +550,24 @@ impl View {
 
     /// Returns the byte offset corresponding to the line `line`.
     pub fn offset_of_line(&self, text: &Rope, line: usize) -> usize {
+        match self.breaks {
+            Some(ref breaks) => {
+                breaks.convert_metrics::<BreaksMetric, BreaksBaseMetric>(line)
+            }
+            None => {
+                // sanitize input
+                let line = line.min(text.measure::<LinesMetric>() + 1);
+                text.offset_of_line(line)
+            }
+        }
+    }
+
+    // Calculate byte offset from start of line
+    // of certain column
+    // 1. get codepoint cursor
+    // 2. iterate and till total width of seen codepoint are equal to col
+    // 3. return current byte offset of cursor
+    pub fn offset_in_line(&self, text: &Rope, line: usize, col: usize) -> usize {
         match self.breaks {
             Some(ref breaks) => {
                 breaks.convert_metrics::<BreaksMetric, BreaksBaseMetric>(line)
