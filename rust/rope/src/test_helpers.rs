@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use multiset::{SubsetBuilder, Subset};
-use delta::{Delta, self};
-use rope::{Rope, RopeInfo};
+use delta::{self, Delta};
 use interval::Interval;
+use multiset::{Subset, SubsetBuilder};
+use rope::{Rope, RopeInfo};
 
 /// Creates a `Subset` of `s` by scanning through `substr` and finding which
 /// characters of `s` are missing from it in order. Returns a `Subset` which
@@ -38,6 +38,12 @@ impl Delta<RopeInfo> {
     pub fn apply_to_string(&self, s: &str) -> String {
         String::from(self.apply(&Rope::from(s)))
     }
+
+    pub fn apply_to_string_in_place(&self, s: &str) -> String {
+        let mut rope = Rope::from(s);
+        self.apply_in_place(&mut rope);
+        String::from(rope)
+    }
 }
 
 impl PartialEq for Rope {
@@ -51,11 +57,11 @@ pub fn parse_subset(s: &str) -> Subset {
 
     for c in s.chars() {
         if c == '#' {
-            sb.push_segment(1,1);
+            sb.push_segment(1, 1);
         } else if c == 'e' {
             // do nothing, used for empty subsets
         } else {
-            sb.push_segment(1,0);
+            sb.push_segment(1, 0);
         }
     }
 
@@ -63,7 +69,11 @@ pub fn parse_subset(s: &str) -> Subset {
 }
 
 pub fn parse_subset_list(s: &str) -> Vec<Subset> {
-    s.lines().map(|s| s.trim()).filter(|s| !s.is_empty()).map(parse_subset).collect()
+    s.lines()
+        .map(|s| s.trim())
+        .filter(|s| !s.is_empty())
+        .map(parse_subset)
+        .collect()
 }
 
 pub fn debug_subsets(subsets: &[Subset]) {
@@ -81,11 +91,11 @@ pub fn parse_delta(s: &str) -> Delta<RopeInfo> {
         if c == '-' {
             i += 1;
         } else if c == '!' {
-            b.delete(Interval::new_closed_open(i,i+1));
+            b.delete(Interval::new_closed_open(i, i + 1));
             i += 1;
         } else {
             let inserted = format!("{}", c);
-            b.replace(Interval::new_closed_open(i,i), Rope::from(inserted));
+            b.replace(Interval::new_closed_open(i, i), Rope::from(inserted));
         }
     }
 
