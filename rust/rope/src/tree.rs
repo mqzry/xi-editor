@@ -208,7 +208,7 @@ impl<N: NodeInfo> Node<N> {
         self.0.height
     }
 
-    fn is_leaf(&self) -> bool {
+    pub fn is_leaf(&self) -> bool {
         self.0.height == 0
     }
 
@@ -239,7 +239,7 @@ impl<N: NodeInfo> Node<N> {
         (None, offset)
     }
 
-    fn get_leaf(&self) -> &N::L {
+    pub fn get_leaf(&self) -> &N::L {
         if let NodeVal::Leaf(ref l) = self.0.val {
             l
         } else {
@@ -398,7 +398,8 @@ impl<N: NodeInfo> Node<N> {
                     }
                     let child_iv = child.interval();
                     // easier just to use signed ints?
-                    let rec_iv = iv.intersect(child_iv.translate(offset))
+                    let rec_iv = iv
+                        .intersect(child_iv.translate(offset))
                         .translate_neg(offset);
                     child.push_subseq(b, rec_iv);
                     offset += child.len();

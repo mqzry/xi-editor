@@ -146,22 +146,55 @@ impl<N: NodeInfo> Delta<N> {
             return;
         }
 
-        let mut b = TreeBuilder::new();
-
-        for elem in &self.els {
-            match *elem {
-                DeltaElement::Copy(beg, end) => {
-                    base.push_subseq(&mut b, Interval::new_closed_open(beg, end))
-                }
-                DeltaElement::Insert(ref n) => b.push(n.clone()),
-            }
-        }
-        *base = b.build()
+        *base = self.apply(base);
     }
 
     pub fn try_apply(&self, base: &Node<N>) -> bool {
         false
     }
+
+    pub fn try_apply_to_leaf(&self, base: &Node<N>) -> bool {
+        debug_assert!(base.is_leaf());
+        // TODO: maybe try to mutate in place, using either unsafe or
+        // special-case single-char insert and remove (plus trunc, append)
+
+        let mut new_content = "";
+        let current_content = base.get_leaf();
+        for elem in &self.els {
+            // match *elem {
+            //     DeltaElement::Copy(beg, end) => {return;}
+            //     DeltaElement::Insert(ref n) => base.push(n.clone()),
+            // }
+        }
+
+        // *base = b.build()
+        false
+    }
+
+    // fn try_replace_str(n: &mut Node, start: usize, end: usize, new: &str) -> bool {
+    //     if n.height() == 0 {
+    //         return Node::try_replace_leaf_str(n, start, end, new);
+    //     }
+    //     if let Some(node) = Rc::get_mut(&mut n.0) {
+    //         // unique reference, let's try to mutate in place
+    //         let mut success = false;
+    //         match node.val {
+    //             NodeVal::Internal(ref mut v) => {
+    //                 if let Some((i, offset)) = Node::try_find_child(v, start, end) {
+    //                     let old_nl_count = v[i].newline_count();
+    //                     success = Node::try_replace_str(&mut v[i], start - offset, end - offset, new);
+    //                     if success {
+    //                         // update invariants
+    //                         node.len = node.len - (end - start) + new.len();
+    //                         node.newline_count = node.newline_count - old_nl_count + v[i].newline_count();
+    //                     }
+    //                 }
+    //             },
+    //             _ => panic!("height and node type inconsistent")
+    //         }
+    //         return success;
+    //     }
+    // }
 
     /// Factor the delta into an insert-only delta and a subset representing deletions.
     /// Applying the insert then the delete yields the same result as the original delta:
